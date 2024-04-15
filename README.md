@@ -46,4 +46,39 @@
     dotnet new webapi -f net6.0 -n Product.Query.API --may be minimal API + nosql
     dotnet sln add eCommerce.Presentation/Services/Product/Product.Query.API/Product.Query.API.csproj
     ```
-7. 
+7. Let's go to Domain and create base class **EntityBase**
+    ```
+    cd ecommerce.Domain
+    mkdir Models
+    cd Models
+    mkdir BaseModels
+    cd BaseModels
+    dotnet new class -n EntityBase
+    ```
+    ```
+    public abstract class EntityBase
+    {
+        public Guid ItemId { get; set; }
+        public virtual Guid CreatedBy { get; set; }
+        public virtual DateTime CreateDate { get; set; }
+        public virtual DateTime LastUpdateDate { get; set; }
+        public virtual Guid LastUpdatedBy { get; set; }
+        public bool IsMarkedToDelete { get; set; }
+        public virtual DateTime DeletedDate { get; set; }
+        public virtual Guid DeletedBy { get; set; }
+    }
+    ```
+8. Let's make **ProductCategory** class 
+    ```
+    cd Models
+    mkdir Product
+    cd Product
+    dotnet new class -n ProductCategory
+    ```
+    ```
+    public class ProductCategory : EntityBase
+    {
+        public string Name { get; set;}   
+    }
+    ```
+9. 
