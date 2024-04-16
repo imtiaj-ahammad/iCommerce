@@ -60,3 +60,35 @@
     cd ..
     dotnet sln add Services/Product/Product.Command.API/Product.Command.API.csproj
     ```
+6. Adding EntityBase class 
+    ```
+
+    cd Product.Command.Domain
+    mkdir Entities
+    cd Entities
+    dotnet new class -n EntityBase
+    ```
+    ```
+    public abstract class EntityBase
+    {
+        public Guid Id { get; set; }
+        public virtual Guid CreatedBy { get; set; }
+        public virtual DateTime CreateDate { get; set; }
+        public virtual DateTime LastUpdateDate { get; set; }
+        public virtual Guid LastUpdatedBy { get; set; }
+        public bool IsMarkedToDelete { get; set; }
+        public virtual DateTime DeletedDate { get; set; }
+        public virtual Guid DeletedBy { get; set; }
+        public virtual string Remarks {get; set;}    
+    }
+    ```
+7. Adding Product Entity
+    ```
+    public class Product : EntityBase
+    {
+    public string Name { get; private set; }
+    public string? Description { get; private set; }
+    public decimal? Price { get; private set; }
+    }
+    ```
+8. 
