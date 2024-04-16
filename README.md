@@ -20,65 +20,43 @@
     cd src
     dotnet new sln -n iCommerce
     ```
-5. Create class libraries and add to the solution for followings-
+5. Create a folder for services in src and add folders and projects accordingly-
     ```
-    dotnet new classlib -f net6.0 -n eCommerce.Domain
-    dotnet sln add eCommerce.Domain/eCommerce.Domain.csproj
-    dotnet new classlib -f net6.0 -n eCommerce.Application
-    dotnet sln add eCommerce.Application/eCommerce.Application.csproj
-    dotnet new classlib -f net6.0 -n eCommerce.Infrastructure
-    dotnet sln add eCommerce.Infrastructure/eCommerce.Infrastructure.csproj
-    dotnet new classlib -f net6.0 -n eCommerce.Persistence
-    dotnet sln add eCommerce.Persistence/eCommerce.Persistence.csproj
-    ```
-6. Now lets create a separate folder for presentation layer projects
-    ```
-    mkdir eCommerce.Presentation
-    cd eCommerce.Presentation
+    cd src
     mkdir Services
     cd Services
     mkdir Product
     cd Product
-    dotnet new webapi -f net6.0 -n Product.Command.API
-    dotnet sln add eCommerce.Presentation/Services/Product/Product.Command.API/Product.Command.API.csproj
+    dotnet new classlib -f net6.0 -n Product.Command.Application
+    cd ..
+    cd ..
+    dotnet sln add Services/Product/Product.Command.Application/Product.Command.Application.csproj
 
-    
-    dotnet new webapi -f net6.0 -n Product.Query.API --may be minimal API + nosql
-    dotnet sln add eCommerce.Presentation/Services/Product/Product.Query.API/Product.Query.API.csproj
-    ```
-7. Let's go to Domain and create base class **EntityBase**
-    ```
-    cd ecommerce.Domain
-    mkdir Models
-    cd Models
-    mkdir BaseModels
-    cd BaseModels
-    dotnet new class -n EntityBase
-    ```
-    ```
-    public abstract class EntityBase
-    {
-        public Guid ItemId { get; set; }
-        public virtual Guid CreatedBy { get; set; }
-        public virtual DateTime CreateDate { get; set; }
-        public virtual DateTime LastUpdateDate { get; set; }
-        public virtual Guid LastUpdatedBy { get; set; }
-        public bool IsMarkedToDelete { get; set; }
-        public virtual DateTime DeletedDate { get; set; }
-        public virtual Guid DeletedBy { get; set; }
-    }
-    ```
-8. Let's make **ProductCategory** class 
-    ```
-    cd Models
-    mkdir Product
+    cd Services
     cd Product
-    dotnet new class -n ProductCategory
+    dotnet new classlib -f net6.0 -n Product.Command.Domain
+    cd ..
+    cd ..
+    dotnet sln add Services/Product/Product.Command.Domain/Product.Command.Domain.csproj
+
+    cd Services
+    cd Product
+    dotnet new classlib -f net6.0 -n Product.Command.Infrastructure
+    cd ..
+    cd ..
+    dotnet sln add Services/Product/Product.Command.Infrastructure/Product.Command.Infrastructure.csproj
+
+    cd Services
+    cd Product
+    dotnet new classlib -f net6.0 -n Product.Command.Persistence
+    cd ..
+    cd ..
+    dotnet sln add Services/Product/Product.Command.Persistence/Product.Command.Persistence
+    
+    cd Services
+    cd Product
+    dotnet new webapi -f net6.0 -n Product.Command.API
+    cd ..
+    cd ..
+    dotnet sln add Services/Product/Product.Command.API/Product.Command.API.csproj
     ```
-    ```
-    public class ProductCategory : EntityBase
-    {
-        public string Name { get; set;}   
-    }
-    ```
-9. 
