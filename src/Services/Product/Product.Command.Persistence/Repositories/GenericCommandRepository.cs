@@ -1,6 +1,8 @@
-﻿namespace Product.Command.Persistence;
+﻿using Product.Command.Application;
 
-public class GenericCommandRepository<T> : IGenericCommandRepository<T> where T : class
+namespace Product.Command.Persistence;
+
+public class GenericCommandRepository<T> : IGenericRepository<T> where T : class
 {
     public readonly MssqlDbContext _context;
     public GenericCommandRepository(MssqlDbContext context)

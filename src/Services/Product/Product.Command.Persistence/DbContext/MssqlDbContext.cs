@@ -1,10 +1,12 @@
-﻿namespace Product.Command.Persistence;
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace Product.Command.Persistence;
 
 public class MssqlDbContext  : DbContext
 {
     public MssqlDbContext(DbContextOptions<MssqlDbContext> options) : base(options) { }
 
-		public DbSet<Product> Products { get; set; }
+		public DbSet<Product.Command.Domain.Product> Products { get; set; }
 
         /*protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

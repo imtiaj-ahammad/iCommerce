@@ -51,7 +51,7 @@
     dotnet new classlib -f net6.0 -n Product.Command.Persistence
     cd ..
     cd ..
-    dotnet sln add Services/Product/Product.Command.Persistence/Product.Command.Persistence
+    dotnet sln add Services/Product/Product.Command.Persistence/Product.Command.Persistence.csproj
     
     cd Services
     cd Product
@@ -120,7 +120,7 @@
     }
     ```
     ```
-    cd Services
+    cd Services/Product
     dotnet add Product.Command.Application/Product.Command.Application.csproj reference  Product.Command.Domain/Product.Command.Domain.csproj
     ```
     ```
@@ -198,4 +198,59 @@
     cd Product.Command.Persistence/Repositories
     dotnet new class -n UnitOfWork
     ```
-UnitOfWork
+    ```
+    public class UnitOfWork : IUnitOfWork
+    {
+    private readonly MssqlDbContext _context;
+    public UnitOfWork(MssqlDbContext context)
+    {
+        this._context = context;
+        ProductCommandRepository = new ProductCommandRepository(_context);
+    }
+
+    public IProductCommandRepository ProductCommandRepository { get; private set; }
+
+    public void Dispose()
+    {
+        _context.Dispose();
+    }
+
+    public int Save()
+    {
+        return _context.SaveChanges();
+    }
+    }
+    ```
+10. let's add the following packages for sql and add the configurations into Product.Command.Persistence
+    ```
+    dotnet add package Microsoft.EntityFrameworkCore -v 6.0.16
+    dotnet add package Microsoft.EntityFrameworkCore.SqlServer -v 6.0.16
+    dotnet add package Microsoft.EntityFrameworkCore.Tools -v 6.0.16
+    ```
+    Add the db connectionString in Product.Command.API.appsettings.Development.json
+    ```
+    "ConnectionStrings": {
+    "MssqlDbConnectionString": "Server=DESKTOP-TM16N21; Database=ProductDb; Trusted_Connection=True;"
+    }
+    ```
+    Inject SqlServer with connectionString into Product.Command.API.program.cs
+    ```
+    builder.Services.AddDbContext<MssqlDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("MssqlDbConnectionString")));
+    ```
+    Add the following packages into Product.Command.API
+    ```
+    dotnet add package Microsoft.EntityFrameworkCore -v 6.0.16
+    dotnet add package Microsoft.EntityFrameworkCore.Tools -v 6.0.16
+    dotnet add package Microsoft.EntityFrameworkCore.Design -v 6.0.16
+    dotnet add package Microsoft.EntityFrameworkCore.SqlServer -v 6.0.16
+    ```
+    Add Persistence reference into Product.Command.API
+    ```
+    cd product
+    dotnet add Product.Command.API/Product.Command.API.csproj reference  Product.Command.Infrastructure/Product.Command.Infrastructure.csproj
+    dotnet add Product.Command.API/Product.Command.API.csproj reference  Product.Command.Persistence/Product.Command.Persistence.csproj
+    dotnet add Product.Command.Persistence/Product.Command.Persistence.csproj reference  Product.Command.Application/Product.Command.Application.csproj
+    ```
+11. 
+
+

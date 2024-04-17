@@ -1,4 +1,6 @@
-﻿namespace Product.Command.Persistence;
+﻿using Product.Command.Application;
+
+namespace Product.Command.Persistence;
 
 public class UnitOfWork : IUnitOfWork
 {

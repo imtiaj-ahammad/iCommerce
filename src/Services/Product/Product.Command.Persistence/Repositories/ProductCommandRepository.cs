@@ -1,6 +1,8 @@
-﻿namespace Product.Command.Persistence;
+﻿using Product.Command.Application;
 
-public class ProductCommandRepository : GenericCommandRepository<Product>, IProductCommandRepository
+namespace Product.Command.Persistence;
+
+public class ProductCommandRepository : GenericCommandRepository<Product.Command.Domain.Product>, IProductCommandRepository
 {
     public ProductCommandRepository(MssqlDbContext context) : base(context)
     {
