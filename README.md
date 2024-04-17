@@ -91,4 +91,111 @@
     public decimal? Price { get; private set; }
     }
     ```
-8. 
+8. Now let's add the interfaces for product
+    ```
+    cd Product.Command.Application
+    mkdir Abstractions
+    cd Abstractions
+    mkdir Repositories
+    cd Repositories
+    dotnet new interface -n IGenericRepository
+    ```
+    ```
+    public interface IGenericRepository<T> where T : class
+    {
+	void Add(T entity);
+	void AddRange(IEnumerable<T> entities);
+	void Remove(T entity);
+	void RemoveRange(IEnumerable<T> entities);
+    }
+    ```
+    ```
+    cd Repositories
+    dotnet new interface -n IProductCommandRepository
+    ```
+    ```
+    public interface IProductCommandRepository: IGenericRepository<Product.Command.Domain.Product>
+    {
+
+    }
+    ```
+    ```
+    cd Services
+    dotnet add Product.Command.Application/Product.Command.Application.csproj reference  Product.Command.Domain/Product.Command.Domain.csproj
+    ```
+    ```
+    cd Repositories
+    dotnet new interface -n IUnitOfWork
+    ```
+    ```
+    public interface IUnitOfWork : IDisposable
+    {
+    IProductCommandRepository ProductCommandRepository { get; }
+	int Save();
+    }
+    ```
+9. We will add the implementation for product interfaces
+    ```
+    cd Product.Command.Persistence
+    mkdir DbContext
+    cd DbContext
+    dotnet new class -n MssqlDbContext
+    ```
+    ```
+    public class MssqlDbContext  : DbContext
+    {
+    public MssqlDbContext(DbContextOptions<MssqlDbContext> options) : base(options) { }
+
+		public DbSet<Product> Products { get; set; }
+    }
+    ```
+    ```
+    cd Product.Command.Persistence
+    mkdir Repositories
+    cd Repositories
+    dotnet new class -n GenericCommandRepository
+    ```
+    ```
+    public class GenericCommandRepository<T> : IGenericCommandRepository<T> where T : class
+    {
+    public readonly MssqlDbContext _context;
+    public GenericCommandRepository(MssqlDbContext context)
+    {
+         _context = context;
+    }
+    public void Add(T entity)
+    {
+        _context.Set<T>().Add(entity);
+    }
+    public void AddRange(IEnumerable<T> entities)
+    {
+        _context.Set<T>().AddRange(entities);
+    }
+    public void Remove(T entity)
+    {
+        _context.Set<T>().Remove(entity);
+    }
+    public void RemoveRange(IEnumerable<T> entities)
+    {
+        _context.Set<T>().RemoveRange(entities);
+    }
+    }
+    ```
+    ```
+    cd Product.Command.Persistence/Repositories
+    dotnet new class -n ProductCommandRepository
+    ```
+    ```
+    public class ProductCommandRepository : GenericCommandRepository<Product>, IProductCommandRepository
+    {
+        public ProductCommandRepository(MssqlDbContext context) : base(context)
+        {
+
+        }
+    }
+    ```
+    ```
+    cd Product.Command.Persistence/Repositories
+    dotnet new class -n UnitOfWork
+    ```
+UnitOfWork
