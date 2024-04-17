@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Product.Command.Application;
 using Product.Command.Persistence;
@@ -15,6 +16,8 @@ builder.Services.AddSwaggerGen();
 //builder.Services.AddDbContext<MovieDbContext>(opt => opt.UseSqlServer(configuration.GetConnectionString("DefaultConnection"), b => b.MigrationsAssembly("CleanMovie.API")));
 builder.Services.AddDbContext<MssqlDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("MssqlDbConnectionString")));
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IValidator<CreateProductCommand>, CreateProductCommandValidator>();
+
 
 var app = builder.Build();
 

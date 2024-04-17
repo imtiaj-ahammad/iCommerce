@@ -322,6 +322,60 @@
         }
     }
     ```
-
 #### CQRS implementation-end
+#### FluentValidation-start
+13. Install the following packages
+    ```
+    dotnet add package FluentValidation -v 11.9.0  
+    //dotnet add package FluentValidation.AspNetCore -v 11.3.0  
+    //dotnet add package FluentValidation.DependencyInjectionExtensions -v 11.9.0
+    ```
+14. Add a new folder for Validators in application
+    ```
+    mkdir Validators
+    cd Validators
+    mkdir Product
+    cd Product
+    dotnet new class -n CreateProductCommandValidator
+    ```
+    ```
+    public class CreateProductCommandValidator : AbstractValidator<CreateProductCommand>
+    {
+    public CreateProductCommandValidator()
+    {
+        RuleFor(user => user.Name).NotEmpty().WithMessage("Name is required.");
+        RuleFor(user => user.Price).GreaterThanOrEqualTo(0).WithMessage("Price must positive number.");
+    }
 
+    }
+    ```
+    ```
+    public class ProductController : ControllerBase
+    {
+    private IMediator _mediator;
+    private readonly CreateProductCommandValidator _createProductCommandValidator;
+    protected IMediator Mediator => _mediator ??= HttpContext.RequestServices.GetService<IMediator>();
+    private readonly ILogger<WeatherForecastController> _logger;
+    public ProductController(ILogger<WeatherForecastController> logger)
+    {
+        _logger = logger;
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create(CreateProductCommand command)
+    {
+        var validationResult = _createProductCommandValidator.Validate(command);
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(validationResult.Errors.ToString());
+        }
+        return Ok(await Mediator.Send(command));
+    }
+    }
+    ```
+    Inject the validator in the Product.Command.API.Program.cs
+    ```
+    builder.Services.AddScoped<IValidator<CreateProductCommand>, CreateProductCommandValidator>();
+    ```
+#### FluentValidation-end
+15. 
