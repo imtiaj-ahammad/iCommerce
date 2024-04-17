@@ -17,9 +17,8 @@ public class UnitOfWork : IUnitOfWork
     {
         _context.Dispose();
     }
-
-    public int Save()
+    public async Task<bool> SaveChangesAsync()
     {
-        return _context.SaveChanges();
+        return await _context.SaveChangesAsync(true) > 0;
     }
 }

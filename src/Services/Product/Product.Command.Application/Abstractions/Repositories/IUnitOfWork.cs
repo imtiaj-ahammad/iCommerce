@@ -2,5 +2,6 @@
 public interface IUnitOfWork : IDisposable
 {
     IProductCommandRepository ProductCommandRepository { get; }
-	int Save();
+    Task<bool> SaveChangesAsync();
+
 }

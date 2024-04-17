@@ -251,6 +251,77 @@
     dotnet add Product.Command.API/Product.Command.API.csproj reference  Product.Command.Persistence/Product.Command.Persistence.csproj
     dotnet add Product.Command.Persistence/Product.Command.Persistence.csproj reference  Product.Command.Application/Product.Command.Application.csproj
     ```
-11. 
+#### CQRS implementation-start
+11. Install the following packages into Product.Command.Application
+    ```
+    dotnet add package MediatR
+    ```
+12. Go to Application and create folder for commands
+    ```
+    cd Product.Command.Application
+    mkdir Commands
+    cd Commands
+    mkdir Product
+    cd Product
+    dotnet new class -n CreateProductCommand
+    ```
+    ```
+    public class CreateProductCommand  : IRequest<Guid>
+    {
+    public string Id { get; set; }
+    public string Name { get; set; }
+    public string? Description { get; set; }
+    public decimal? Price { get; set; }
+    }
+    ```
+    ```
+    dotnet new class -n CreateProductCommandHandler
+    ```
+    ```
+    public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand, int>
+    {
+        private readonly IUnitOfWork _unitOfWork;
+        public CreateProductCommandHandler(IUnitOfWork unitOfWork)
+        {
+            _unitOfWork = unitOfWork;
+        }
+        public async Task<int> Handle(CreateProductCommand command, CancellationToken cancellationToken)
+        {
+            var productObj = new Product.Command.Domain.Product();
+            //productObj.Id = Guid.NewGuid();
+            productObj.Name = command.Name;
+            productObj.Description = command.Description;
+            productObj.Price = command.Price;
+            _unitOfWork.ProductCommandRepository.Add(productObj);
+            await _unitOfWork.SaveChangesAsync();
+            return productObj.Id;
+        }
+    }
+    ```
+    cd Product.Command.API/Controllers
+    dotnet new class -n ProductController
+    ```
+    ```
+    public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand, int>
+    {
+        private readonly IUnitOfWork _unitOfWork;
+        public CreateProductCommandHandler(IUnitOfWork unitOfWork)
+        {
+            _unitOfWork = unitOfWork;
+        }
+        public async Task<int> Handle(CreateProductCommand command, CancellationToken cancellationToken)
+        {
+            var productObj = new Product.Command.Domain.Product();
+            //productObj.Id = Guid.NewGuid();
+            productObj.Name = command.Name;
+            productObj.Description = command.Description;
+            productObj.Price = command.Price;
+            _unitOfWork.ProductCommandRepository.Add(productObj);
+            await _unitOfWork.SaveChangesAsync();
+            return productObj.Id;
+        }
+    }
+    ```
 
+#### CQRS implementation-end
 
