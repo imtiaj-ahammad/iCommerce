@@ -378,4 +378,61 @@
     builder.Services.AddScoped<IValidator<CreateProductCommand>, CreateProductCommandValidator>();
     ```
 #### FluentValidation-end
-15. 
+#### AutoMapper-start
+15. Go to Product.Command.Application and add the required packages for automapper
+    ```
+    dotnet add package AutoMapper -v 12.0.1
+    dotnet add package AutoMapper.Extensions.Microsoft.DependencyInjection -v 12.0.1
+    ```
+16. Configure AutoMapper into services
+    ``` 
+    builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly()); 
+    ```
+17. Go to application and make folder for mapping profiles
+    ```
+    mkdir MapplingProfiles
+    cd MappingProfiles
+    mkdir Product
+    cd Product
+    dotnet new class -n ProductMappingProfile
+    ```
+    ```
+    public class ProductMappingProfile : Profile
+    {
+        public ProductMappingProfile()
+        {
+            CreateMap<CreateProductCommand, Product.Command.Domain.Product>()
+                    .ForMember(dest => dest.ExtraId,
+                        opt =>
+                            opt.MapFrom(src => Guid.NewGuid().ToString()));
+        }
+    }
+    ```
+    ```
+    public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand, int>
+    {
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
+        public CreateProductCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+        {
+            _unitOfWork = unitOfWork;
+            _mapper = mapper;
+        }
+        public async Task<int> Handle(CreateProductCommand command, CancellationToken cancellationToken)
+        {
+
+            var productObj0 = _mapper.Map<Product.Command.Domain.Product>(command);
+
+            var productObj = new Product.Command.Domain.Product();
+            //productObj.Id = Guid.NewGuid();
+            productObj.Name = command.Name;
+            productObj.Description = command.Description;
+            productObj.Price = command.Price;
+            _unitOfWork.ProductCommandRepository.Add(productObj);
+            await _unitOfWork.SaveChangesAsync();
+            return productObj.Id;
+        }
+    }
+    ```
+#### AutoMapper-end
+18. 

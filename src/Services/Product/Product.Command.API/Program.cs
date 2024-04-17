@@ -1,3 +1,4 @@
+using System.Reflection;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Product.Command.Application;
@@ -17,6 +18,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<MssqlDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("MssqlDbConnectionString")));
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IValidator<CreateProductCommand>, CreateProductCommandValidator>();
+builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly()); 
 
 
 var app = builder.Build();
