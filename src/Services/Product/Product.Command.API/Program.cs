@@ -1,6 +1,7 @@
 using System.Reflection;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Product.Command.API;
 using Product.Command.Application;
 using Product.Command.Persistence;
 
@@ -29,6 +30,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+//Registering the exception handling middleware 
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseHttpsRedirection();
 

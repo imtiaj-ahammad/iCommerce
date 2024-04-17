@@ -298,6 +298,7 @@
         }
     }
     ```
+    ```
     cd Product.Command.API/Controllers
     dotnet new class -n ProductController
     ```
@@ -435,4 +436,61 @@
     }
     ```
 #### AutoMapper-end
-18. 
+#### GlobalExceptionHandler-start
+18. Install the following packages
+    ```
+    cd Product.Command.API
+    dotnet add package Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore -v 6.0.28
+    dotnet add package Microsoft.AspNetCore.Mvc.NewtonsoftJson -v 6.0.28
+    ```
+19. create a new folder and create class for exceptionMiddleware
+    ```
+    mkdir Middleware
+    cd Middleware
+    dotnet new class -n ExceptionMiddleware
+    ```
+    ```
+    public class ExceptionMiddleware
+    {
+        private readonly RequestDelegate _next;
+
+        public ExceptionMiddleware(RequestDelegate next)
+        {
+            _next = next;
+        }
+        public async Task InvokeAsync(HttpContext context)
+        {
+            try
+            {
+                await _next(context);
+            }
+            catch(Exception ex)
+            {
+                await HandleExceptionAsync(context, ex);
+            }
+        }
+
+        private static Task HandleExceptionAsync(HttpContext context, Exception exception)
+        {
+            context.Response.ContentType = "application/json";
+            context.Response.StatusCode = (int) HttpStatusCode.InternalServerError;
+
+            var errorResponse = new
+                {
+                    message = "An error occurred while processing your request.",
+                    details = exception.Message
+                };
+
+                var jsonErrorResponse = JsonConvert.SerializeObject(errorResponse);
+
+                return context.Response.WriteAsync(jsonErrorResponse);
+        }
+    }
+    ```
+20. Inject ExceptionMiddleware into program
+    ```
+    //Registering the exception handling middleware 
+    app.UseMiddleware<ExceptionMiddleware>();
+    ```
+#### GlobalExceptionHandler-end
+21. 
