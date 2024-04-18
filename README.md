@@ -493,4 +493,139 @@
     app.UseMiddleware<ExceptionMiddleware>();
     ```
 #### GlobalExceptionHandler-end
-21. 
+
+#### RabbitMQ MassTransit -start
+21. Add the following packages
+    ```
+    dotnet add package MassTransit --version 6.3.2
+    dotnet add package MassTransit.RabbitMQ --version 6.3.2
+    dotnet add package MassTransit.AspNetCore --version 6.3.2
+    ```
+22. We will now configure the Product.Command.API as a publisher in ASP.NET Core container. Go to program file and add the followings-
+    ```
+    // Add masstransit
+    builder.Services.AddMassTransit(x => 
+    {
+        x.AddBus(provider => Bus.Factory.CreateUsingRabbitMq(config => 
+            {
+                config.UseHealthCheck(provider);
+                config.Host(new Uri("rabbitmq://localhost"), h =>
+                    {
+                        h.Username("guest");
+                        h.Password("guest");
+                    });
+            }));
+    });// this add the MassTransit Service to the ASP.NET Core service container
+    builder.Services.AddMassTransitHostedService();// this creates a new Service Bus using RabbitMQ with the provided paremeters like the host url, username, password etc
+    ```
+23. Update the product controller for masstransit
+    ```
+    [ApiController]
+    [Route("[controller]")]
+    public class ProductController : ControllerBase
+    {
+        private IMediator _mediator;
+        private readonly CreateProductCommandValidator _createProductCommandValidator;
+        protected IMediator Mediator => _mediator ??= HttpContext.RequestServices.GetService<IMediator>();
+
+        private readonly IBus _bus;
+        private readonly ILogger<WeatherForecastController> _logger;
+        public ProductController(ILogger<WeatherForecastController> logger, IBus bus)
+        {
+            _logger = logger;
+            _bus = bus;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create(CreateProductCommand command)
+        {
+            var validationResult = _createProductCommandValidator.Validate(command);
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(validationResult.Errors.ToString());
+            }
+            //commented for developing masstransit-> return Ok(await Mediator.Send(command));
+            //
+            Uri uri = new Uri("rabbitmq://localhost/ticketQueue");
+            // we are naming our queue as ticketQueue, if it does not exist, RabbitMQ will create one.
+            var endPoint = await _bus.GetSendEndpoint(uri);
+            await endPoint.Send(command);
+            return Ok();
+            //
+        }
+    }    
+    ```
+24. Let's create a console application that will consume all the requests from queue
+    ```
+    cd src
+    mkdir Services
+    cd Services
+    mkdir Product
+    cd Product
+    dotnet new webapi -f net6.0 -n Product.Command.Worker
+    cd ..
+    cd ..
+    dotnet sln add Services/Product/Product.Command.Worker/Product.Command.Worker.csproj
+    ```
+25. Add the following packages
+    ```
+    dotnet add package MassTransit --version 6.3.2
+    dotnet add package MassTransit.RabbitMQ --version 6.3.2
+    dotnet add package MassTransit.AspNetCore --version 6.3.2
+    ```
+26. Add Application reference to the Worker
+    ```
+    dotnet add Product.Command.Worker/Product.Command.Worker.csproj reference  Product.Command.Application/Product.Command.Application.csproj
+    ```
+27. Create a folder named Consumers and create a class named ProductConsumer
+    ```
+    mkdir Consumers
+    cd Consumers
+    dotnet new class -n ProductConsumer
+    ```
+    ```
+    ```
+    public class ProductConsumer : IConsumer<CreateProductCommand>
+    {
+        private readonly IMediator _mediator;
+        public ProductConsumer(IMediator mediator)
+        {
+            _mediator = mediator;
+        }
+        public async Task Consume(ConsumeContext<CreateProductCommand> context)
+        {
+            var createProductCommand = context.Message;//we are extracting the actual message from the Context
+            await _mediator.Send(createProductCommand);
+            //Validate the Ticket Data
+            //Store to Database
+            //Notify the user via Email / SMS
+        }
+    }
+    ```
+28. We will now configure the Product.Command.Worker as a consumer in ASP.NET Core container. Go to program file and add the followings-
+    ```
+    // Add services to the container.
+    builder.Services.AddMediatR(Assembly.GetExecutingAssembly());
+    // Add masstransit  
+    builder.Services.AddMassTransit(x => 
+        {
+            x.AddConsumer<ProductConsumer>();
+            x.AddBus(provider => Bus.Factory.CreateUsingRabbitMq(config => 
+                {
+                    config.UseHealthCheck(provider);
+                    config.Host(new Uri("rabbitmq://localhost"), h =>
+                        {
+                            h.Username("guest");
+                            h.Password("guest");
+                        });
+                    config.ReceiveEndpoint("ticketQueue", ep =>
+                        {
+                            ep.PrefetchCount = 16;
+                            ep.UseMessageRetry(rt => rt.Interval(2, 100));
+                            ep.ConfigureConsumer<ProductConsumer>(provider);
+                        });
+                }));
+        });
+    builder.Services.AddMassTransitHostedService();
+    ```
+#### RabbitMQ MassTransit -start

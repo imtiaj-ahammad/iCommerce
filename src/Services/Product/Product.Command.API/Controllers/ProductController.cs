@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using MassTransit;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Product.Command.Application;
 
@@ -11,10 +12,13 @@ public class ProductController : ControllerBase
     private IMediator _mediator;
     private readonly CreateProductCommandValidator _createProductCommandValidator;
     protected IMediator Mediator => _mediator ??= HttpContext.RequestServices.GetService<IMediator>();
+
+    private readonly IBus _bus;
     private readonly ILogger<WeatherForecastController> _logger;
-    public ProductController(ILogger<WeatherForecastController> logger)
+    public ProductController(ILogger<WeatherForecastController> logger, IBus bus)
     {
         _logger = logger;
+        _bus = bus;
     }
 
     [HttpPost]
@@ -25,6 +29,13 @@ public class ProductController : ControllerBase
         {
             return BadRequest(validationResult.Errors.ToString());
         }
-        return Ok(await Mediator.Send(command));
+        //commented for developing masstransit-> return Ok(await Mediator.Send(command));
+        //
+        Uri uri = new Uri("rabbitmq://localhost/ticketQueue");
+        // we are naming our queue as ticketQueue, if it does not exist, RabbitMQ will create one.
+        var endPoint = await _bus.GetSendEndpoint(uri);
+        await endPoint.Send(command);
+        return Ok();
+        //
     }
 }
