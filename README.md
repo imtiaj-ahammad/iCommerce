@@ -27,38 +27,40 @@
     cd Services
     mkdir Product
     cd Product
+    mkdir Product.Command
+    cd Product.Command
     dotnet new classlib -f net6.0 -n Product.Command.Application
     cd ..
     cd ..
-    dotnet sln add Services/Product/Product.Command.Application/Product.Command.Application.csproj
+    dotnet sln add Services/Product/Product.Command/Product.Command.Application/Product.Command.Application.csproj
 
     cd Services
     cd Product
     dotnet new classlib -f net6.0 -n Product.Command.Domain
     cd ..
     cd ..
-    dotnet sln add Services/Product/Product.Command.Domain/Product.Command.Domain.csproj
+    dotnet sln add Services/Product/Product.Command/Product.Command.Domain/Product.Command.Domain.csproj
 
     cd Services
     cd Product
     dotnet new classlib -f net6.0 -n Product.Command.Infrastructure
     cd ..
     cd ..
-    dotnet sln add Services/Product/Product.Command.Infrastructure/Product.Command.Infrastructure.csproj
+    dotnet sln add Services/Product/Product.Command/Product.Command.Infrastructure/Product.Command.Infrastructure.csproj
 
     cd Services
     cd Product
     dotnet new classlib -f net6.0 -n Product.Command.Persistence
     cd ..
     cd ..
-    dotnet sln add Services/Product/Product.Command.Persistence/Product.Command.Persistence.csproj
+    dotnet sln add Services/Product/Product.Command/Product.Command.Persistence/Product.Command.Persistence.csproj
     
     cd Services
     cd Product
     dotnet new webapi -f net6.0 -n Product.Command.API
     cd ..
     cd ..
-    dotnet sln add Services/Product/Product.Command.API/Product.Command.API.csproj
+    dotnet sln add Services/Product/Product.Command/Product.Command.API/Product.Command.API.csproj
     ```
 6. Adding EntityBase class 
     ```
@@ -120,7 +122,7 @@
     }
     ```
     ```
-    cd Services/Product
+    cd Product.Command
     dotnet add Product.Command.Application/Product.Command.Application.csproj reference  Product.Command.Domain/Product.Command.Domain.csproj
     ```
     ```
@@ -246,7 +248,7 @@
     ```
     Add Persistence reference into Product.Command.API
     ```
-    cd product
+    cd Product.Command/
     dotnet add Product.Command.API/Product.Command.API.csproj reference  Product.Command.Infrastructure/Product.Command.Infrastructure.csproj
     dotnet add Product.Command.API/Product.Command.API.csproj reference  Product.Command.Persistence/Product.Command.Persistence.csproj
     dotnet add Product.Command.Persistence/Product.Command.Persistence.csproj reference  Product.Command.Application/Product.Command.Application.csproj
@@ -555,17 +557,19 @@
         }
     }    
     ```
-24. Let's create a console application that will consume all the requests from queue
+24. Let's create a webapi application that will consume all the requests from queue
     ```
     cd src
     mkdir Services
     cd Services
     mkdir Product
     cd Product
+    mkdir Product.Command
+    cd Product.Command
     dotnet new webapi -f net6.0 -n Product.Command.Worker
     cd ..
     cd ..
-    dotnet sln add Services/Product/Product.Command.Worker/Product.Command.Worker.csproj
+    dotnet sln add Services/Product/Product.Command/Product.Command.Worker/Product.Command.Worker.csproj
     ```
 25. Add the following packages
     ```
@@ -629,3 +633,44 @@
     builder.Services.AddMassTransitHostedService();
     ```
 #### RabbitMQ MassTransit -start
+#### Product.Query-structure-start
+29. Let's build the structure for Product.Query
+    ```
+    cd Product
+    mkdir Product.Query
+    cd Product.Query
+
+    dotnet new classlib -f net6.0 -n Product.Query.Application
+    cd ..
+    cd ..
+    dotnet sln add Services/Product/Product.Query/Product.Query.Application/Product.Query.Application.csproj
+
+    cd Product.Query/
+    dotnet new classlib -f net6.0 -n Product.Query.Domain
+    cd ..
+    cd ..
+    dotnet sln add Services/Product/Product.Query/Product.Query.Domain/Product.Query.Domain.csproj
+
+    cd Services
+    cd Product.Query/
+    dotnet new classlib -f net6.0 -n Product.Query.Infrastructure
+    cd ..
+    cd ..
+    dotnet sln add Services/Product/Product.Query/Product.Query.Infrastructure/Product.Query.Infrastructure.csproj
+
+    cd Services
+    cd Product.Query/
+    dotnet new classlib -f net6.0 -n Product.Query.Persistence
+    cd ..
+    cd ..
+    dotnet sln add Services/Product/Product.Query/Product.Query.Persistence/Product.Query.Persistence.csproj
+    
+    cd Services
+    cd Product.Query/
+    dotnet new webapi -f net6.0 -n Product.Query.API
+    cd ..
+    cd ..
+    dotnet sln add Services/Product/Product.Query/Product.Query.API/Product.Query.API.csproj
+    ```
+#### Product.Query-structure-end
+30. 
