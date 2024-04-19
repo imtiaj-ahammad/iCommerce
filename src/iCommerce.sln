@@ -7,17 +7,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Services", "Services", "{12
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Product", "Product", "{A9EC3ADB-94B4-40D5-A604-520AD4F80775}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Product.Command.Application", "Services\Product\Product.Command.Application\Product.Command.Application.csproj", "{289889B0-A812-45BF-8B64-B4C13DD2D7BC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Product.Command.Application", "Services\Product\Product.Command\Product.Command.Application\Product.Command.Application.csproj", "{289889B0-A812-45BF-8B64-B4C13DD2D7BC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Product.Command.Domain", "Services\Product\Product.Command.Domain\Product.Command.Domain.csproj", "{E71CD6A3-8880-4C75-A569-392DD3834C6B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Product.Command.Domain", "Services\Product\Product.Command\Product.Command.Domain\Product.Command.Domain.csproj", "{E71CD6A3-8880-4C75-A569-392DD3834C6B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Product.Command.Infrastructure", "Services\Product\Product.Command.Infrastructure\Product.Command.Infrastructure.csproj", "{3418613A-E6C4-4441-951F-5236C6068663}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Product.Command.Infrastructure", "Services\Product\Product.Command\Product.Command.Infrastructure\Product.Command.Infrastructure.csproj", "{3418613A-E6C4-4441-951F-5236C6068663}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Product.Command.API", "Services\Product\Product.Command.API\Product.Command.API.csproj", "{DD1CA4E2-B005-4219-A70E-E76C6E3EDACC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Product.Command.API", "Services\Product\Product.Command\Product.Command.API\Product.Command.API.csproj", "{DD1CA4E2-B005-4219-A70E-E76C6E3EDACC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Product.Command.Persistence", "Services\Product\Product.Command.Persistence\Product.Command.Persistence.csproj", "{A418469C-EBD3-4D4B-9124-BA001B0EA3AB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Product.Command.Persistence", "Services\Product\Product.Command\Product.Command.Persistence\Product.Command.Persistence.csproj", "{A418469C-EBD3-4D4B-9124-BA001B0EA3AB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Product.Command.Worker", "Services\Product\Product.Command.Worker\Product.Command.Worker.csproj", "{41671FB7-0899-4BEC-BC4F-54AD85E926ED}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Product.Command.Worker", "Services\Product\Product.Command\Product.Command.Worker\Product.Command.Worker.csproj", "{41671FB7-0899-4BEC-BC4F-54AD85E926ED}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Product.Command", "Product.Command", "{629DB55B-D725-4136-AA3C-FBBF6816E548}"
 EndProject
