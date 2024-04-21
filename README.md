@@ -673,4 +673,289 @@
     dotnet sln add Services/Product/Product.Query/Product.Query.API/Product.Query.API.csproj
     ```
 #### Product.Query-structure-end
-30. 
+#### domains,interfaces,implementations for Product.Query-start
+30. Lets add the interfaces for Product.Query
+    ```
+    cd Product.Query.Application
+    mkdir Abstractions
+    cd Abstractions
+    mkdir Repositories
+    cd Repositories
+    dotnet new interface -n IGenericRepository
+    ```
+    ```
+    public interface IGenericRepository <T> where T : class
+    {
+	T GetById(int id);
+	IEnumerable<T> GetAll();
+	IEnumerable<T> Find(Expression<Func<T, bool>> predicate);
+    }
+    ```
+    ```
+    dotnet new interface -n IProductQueryRepository
+    ```
+    ```
+    public interface IProductQueryRepository: IGenericRepository<Product.Query.Domain.Product>
+    {
+
+    }
+    ```
+    ```
+    dotnet new interface -n IUnitOfWork
+    ```
+    ```
+    public interface IUnitOfWork : IDisposable
+    {
+    IProductQueryRepository ProductQueryRepository { get; }
+    Task<bool> SaveChangesAsync();
+    }
+    ```
+    ```
+    cd Product.Query
+    dotnet add Product.Query.Application/Product.Query.Application.csproj reference  Product.Query.Domain/Product.Query.Domain.csproj
+    ```
+31. Let's go to Product.Query.Domain and add the domain class
+    ```
+    cd Product.Query.Domain
+    mkdir Entities
+    cd Entities
+    dotnet new class -n EntityBase
+    dotnet new class -n Product
+    ```
+    ```
+    public abstract class EntityBase
+    {
+    public int Id { get; set; }
+    /*public Guid Id { get; set; }
+    public virtual Guid CreatedBy { get; set; }
+    public virtual DateTime CreateDate { get; set; }
+    public virtual DateTime LastUpdateDate { get; set; }
+    public virtual Guid LastUpdatedBy { get; set; }
+    public bool IsMarkedToDelete { get; set; }
+    public virtual DateTime DeletedDate { get; set; }
+    public virtual Guid DeletedBy { get; set; }
+    public virtual string Remarks {get; set;}*/ 
+    }
+    ```
+    ```
+    public class Product : EntityBase
+    {
+    public string Name { get; set; }
+    public string? Description { get; set; }
+    public decimal? Price { get; set; }
+    public Guid ExtraId { get; set; }
+    }
+    ```
+    ```
+    cd Product.Query.Persistence
+    mkdir DbContext
+    cd DbContext
+    dotnet new class -n MongoDbContext
+    cd..
+    mkdir Repositories
+    cd Repositories
+    dotnet new class -n GenericRepository
+    dotnet new class -n ProductQueryRepository
+    dotnet new class -n UnitOfWork
+    ```
+    ```
+    public class MobDbContext  : DbContext
+    {
+    public MobDbContext(DbContextOptions<MobDbContext> options) : base(options) { }
+
+		public DbSet<Product.Query.Domain.Product> Products { get; set; }
+
+        /*protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+			modelBuilder.Entity<Actor>().HasData(
+					new Actor { Id = 1, FirstName = "Chuck", LastName = "Norris" }
+					, new Actor { Id = 2, FirstName = "Jane", LastName = "Doe" }
+					, new Actor { Id = 3, FirstName = "Van", LastName = "Damme" }
+				);
+        }*/
+    }
+    ```
+    ```
+    public class GenericQueryRepository<T> : IGenericRepository<T> where T : class
+    {
+    public readonly MobDbContext _context;
+    public GenericQueryRepository(MobDbContext context)
+    {
+        _context = context;
+    }
+    public IEnumerable<T> Find(Expression<Func<T, bool>> predicate)
+    {
+        return _context.Set<T>().Where(predicate);
+    }
+
+    public IEnumerable<T> GetAll()
+    {
+        return _context.Set<T>().ToList();
+    }
+
+    public T GetById(int id)
+    {
+        return _context.Set<T>().Find(id);
+    }
+    }
+    ```
+    ```
+    public class ProductQueryRepository : GenericRepository<Product.Query.Domain.Product>, IProductQueryRepository
+    {   
+    public ProductQueryRepository(MobDbContext context) : base(context)
+    {
+
+    }
+    }
+    ```
+    ```
+    public class UnitOfWork : IUnitOfWork
+    {
+    private readonly MobDbContext _context;
+    public UnitOfWork(MobDbContext context)
+    {
+        this._context = context;
+        ProductCategoryQueryRepository = new ProductQueryRepository(_context);
+    }
+
+    public IProductQueryRepository ProductQueryRepository { get; private set; }
+
+    public void Dispose()
+    {
+        _context.Dispose();
+    }
+
+    public int Save()
+    {
+        return _context.SaveChanges();
+    }
+    }
+    ```
+    ```
+    dotnet add Product.Query.Persistence/Product.Query.Persistence.csproj reference  Product.Query.Application/Product.Query.Application.csproj
+    ```
+32. Let's add the following packages for EF and add the configurations into Product.Query.Persistence
+    ```
+    dotnet add package Microsoft.EntityFrameworkCore -v 6.0.16
+    dotnet add package Microsoft.EntityFrameworkCore.SqlServer -v 6.0.16
+    dotnet add package Microsoft.EntityFrameworkCore.Tools -v 6.0.16
+    ```
+33. Let's add Persistence and Infrastructure reference into API
+    ```
+    dotnet add Product.Query.API/Product.Query.API.csproj reference  Product.Query.Persistence/Product.Query.Persistence.csproj
+    dotnet add Product.Query.API/Product.Query.API.csproj reference  Product.Query.Infrastructure/Product.Query.Infrastructure.csproj
+    ```
+34. Let's add new controller for Product
+    ```
+    cd Product.Query.API
+    cd controllers
+    dotnet new class -n ProductController
+    ```
+    ```
+    public class ProductController : ControllerBase
+    {
+    private readonly ILogger<ProductController> _logger;
+
+    public ProductController(ILogger<ProductController> logger)
+    {
+        _logger = logger;
+    }
+    }
+    ```
+#### domains,interfaces,implementations for Product.Query-end
+#### Let's Implement CQRS for Product.Query-start
+35. Install the following packages into Product.Query.Application
+    ```
+    cd Product.Query.Application
+    dotnet add package MediatR -v 12.2.0
+    ```
+36. Let's add commands and commandHandler into Product.Query.Application
+    ```
+    cd Product.Query.Application
+    mkdir Commands
+    cd Commands
+    mkdir Product
+    cd Product
+    dotnet new class -n  GetProductsQuery
+    dotnet new class -n  GetProductsQueryHandler
+    dotnet new class -n  GetProductByIdQuery
+    dotnet new class -n  GetProductByIdQueryHandler
+    ```
+    ```
+    public class GetProductQuery : IRequest<IEnumerable<Product.Query.Domain.Product>>
+    {
+
+    }
+    ```
+    ```
+    public class GetProductByIdQuery : IRequest<Product.Query.Domain.Product>
+    {
+    public int Id { get; set; }
+    }
+    ```
+    ```
+    public class GetProductsQueryHandler  : IRequestHandler<GetProductsQuery, IEnumerable<Product.Query.Domain.Product>>
+    {
+    private readonly IUnitOfWork _unitOfWork;
+    public GetProductsQueryHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+    public async Task<IEnumerable<Product.Query.Domain.Product>> Handle(GetProductsQuery query, CancellationToken cancellationToken)
+    {
+        var productList =  _unitOfWork.ProductQueryRepository.GetAll();
+        if(productList == null)
+        {
+            return null;
+        }
+        return productList;
+    }
+    }
+    ```
+    ```
+    public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, Product.Query.Domain.Product>
+    {
+    private readonly IUnitOfWork _unitOfWork;
+    public GetProductByIdQueryHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+    public async Task<Product.Query.Domain.Product> Handle(GetProductByIdQuery query, CancellationToken cancellationToken)
+    {
+        var product = /*await*/ _unitOfWork.ProductQueryRepository.GetById(query.Id);
+        if(product == null )
+        {
+            return null;
+        }
+        return product;
+    }
+    }
+    ```
+    ```
+    public class ProductController : ControllerBase
+    {
+        private IMediator _mediator;
+        private readonly ILogger<ProductController> _logger;
+        protected IMediator Mediator => _mediator ??= HttpContext.RequestServices.GetService<IMediator>();
+
+        public ProductController(ILogger<ProductController> logger)
+        {
+            _logger = logger;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            return Ok(await Mediator.Send(new GetProductsQuery()));
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            return Ok(await Mediator.Send(new GetProductByIdQuery { Id = id }));
+        }
+
+    }
+    ```
+#### Let's Implement CQRS for Product.Query-end
+37. 
