@@ -6,17 +6,27 @@ namespace Product.Query.Application;
 public class GetProductsQueryHandler  : IRequestHandler<GetProductsQuery, IEnumerable<Product.Query.Domain.Product>>
 {
     private readonly IUnitOfWork _unitOfWork;
-    public GetProductsQueryHandler(IUnitOfWork unitOfWork)
+    private readonly ICacheService _cacheService;
+
+    public GetProductsQueryHandler(IUnitOfWork unitOfWork, ICacheService cacheService)
     {
         _unitOfWork = unitOfWork;
     }
     public async Task<IEnumerable<Product.Query.Domain.Product>> Handle(GetProductsQuery query, CancellationToken cancellationToken)
     {
-        var productList =  _unitOfWork.ProductQueryRepository.GetAll();
-        if(productList == null)
+        //check cache data
+        var cacheData = _cacheService.GetData<IEnumerable<Product.Query.Domain.Product>>("products");
+
+        if(cacheData != null && cacheData.Count() > 0)
         {
-            return null;
+            return (IEnumerable<Product.Query.Domain.Product>)cacheData;
         }
-        return productList;
+        cacheData = /*await*/ _unitOfWork.ProductQueryRepository.GetAll();
+
+        //Set Expiry time
+        var expiryTime = DateTimeOffset.Now.AddSeconds(30);
+        _cacheService.SetData<IEnumerable<Product.Query.Domain.Product>>("products",cacheData, expiryTime);
+
+        return (IEnumerable<Product.Query.Domain.Product>)cacheData;
     }
 }

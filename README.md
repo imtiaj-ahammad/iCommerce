@@ -958,4 +958,113 @@
     }
     ```
 #### Let's Implement CQRS for Product.Query-end
-37. 
+
+#### Redis implementation-start
+37. Add the redis packages for Persistence and Application
+    ```
+    cd Product.Query.Persistence
+    dotnet add package StackExchange.Redis
+    dotnet add package Microsoft.Extensions.Caching.StackExchangeRedis -v 6.0.16
+    cd Product.Query.Application
+    dotnet add package StackExchange.Redis
+    dotnet add package Microsoft.Extensions.Caching.StackExchangeRedis -v 6.0.16
+    ```
+38. Go to Product.Query.Application and add the interface for caching contract
+    ```
+    mkdir Caching
+    cd Caching
+    dotent new interface -n ICacheService 
+    ```
+    ```
+    public interface ICacheService
+    {
+    T GetData<T>(string key);
+    bool SetData<T>(string key, T value, DateTimeOffset expirationTime);
+    object RemoveData(string key);
+    }
+    ```
+39. Go to Product.Query.Persistence and add the implementation of the interface for caching contract
+    ```
+    public class CacheService : ICacheService
+    {
+        private IDatabase _cacheDb;
+        public CacheService(IConfiguration configuration)
+        {
+            var redisConnectionString = configuration.GetConnectionString("RedisConnectionString");
+            var redis = ConnectionMultiplexer.Connect(redisConnectionString);
+            _cacheDb = redis.GetDatabase();
+        }
+        public T GetData<T>(string key)
+        {
+            var value = _cacheDb.StringGet(key);
+            if(!string.IsNullOrEmpty(value))
+            {
+                return JsonSerializer.Deserialize<T>(value);
+            }
+            return default;
+        }
+
+        public object RemoveData(string key)
+        {
+            var exists = _cacheDb.KeyExists(key);
+            if(exists)
+            {
+                return _cacheDb.KeyDelete(key);
+            }
+            return false;
+        }
+
+        public bool SetData<T>(string key, T value, DateTimeOffset expirationTime)
+        {
+            var expiryTime = expirationTime.DateTime.Subtract(DateTime.Now);
+            return _cacheDb.StringSet(key, JsonSerializer.Serialize(value),expiryTime);
+        }
+    }
+    ```
+40. Inject the implementation for ICacheService into Product.Query.API
+    ```
+    builder.Services.AddScoped<ICacheService, CacheService>();
+    ```
+41. Let go to the GetProductsQueryHandler and update it with redis service
+    ```
+    public class GetProductsQueryHandler  : IRequestHandler<GetProductsQuery, IEnumerable<Product.Query.Domain.Product>>
+    {
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly ICacheService _cacheService;
+
+    public GetProductsQueryHandler(IUnitOfWork unitOfWork, ICacheService cacheService)
+    {
+        _unitOfWork = unitOfWork;
+    }
+    public async Task<IEnumerable<Product.Query.Domain.Product>> Handle(GetProductsQuery query, CancellationToken cancellationToken)
+    {
+        //check cache data
+        var cacheData = _cacheService.GetData<IEnumerable<Product.Query.Domain.Product>>("products");
+
+        if(cacheData != null && cacheData.Count() > 0)
+        {
+            return (IEnumerable<Product.Query.Domain.Product>)cacheData;
+        }
+        cacheData = /*await*/ _unitOfWork.ProductQueryRepository.GetAll();
+
+        //Set Expiry time
+        var expiryTime = DateTimeOffset.Now.AddSeconds(30);
+        _cacheService.SetData<IEnumerable<Product.Query.Domain.Product>>("products",cacheData, expiryTime);
+
+        return (IEnumerable<Product.Query.Domain.Product>)cacheData;
+    }
+    }
+    ```
+42. Add the connectionString for Redis on API
+    ```
+    "ConnectionStrings": {
+    "MssqlDbConnectionString": "Server=DESKTOP-TM16N21; Database=ProductDb; Trusted_Connection=True;"
+    ,"RedisConnectionString": "localhost:6379"
+    }
+    ```
+43. Setup the redis image in docker desktop
+    ```
+    docker run --name my-redis -p 6379:6379 -d redis
+    docker ps
+    ```
+#### Redis implementation-end
