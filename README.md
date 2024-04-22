@@ -1098,3 +1098,238 @@
     }
     ```
 #### Option Pattern-end
+#### API Versioning - start
+47. Let's go to Product.Query.API and create folders for v1 and v2
+    ```
+    cd Product.Query.API
+    mkdir Versioning
+    cd Versioning
+    dotnet new class -n ConfigureSwaggerOptions
+    ```
+    ```
+    public class ConfigureSwaggerOptions: IConfigureNamedOptions<SwaggerGenOptions>
+    {
+        private readonly IApiVersionDescriptionProvider _provider;
+
+        public ConfigureSwaggerOptions(
+            IApiVersionDescriptionProvider provider)
+        {
+            _provider = provider;
+        }
+
+        /// <summary>
+        /// Configure each API discovered for Swagger Documentation
+        /// </summary>
+        /// <param name="options"></param>
+        public void Configure(SwaggerGenOptions options)
+        {
+            // add swagger document for every API version discovered
+            foreach (var description in _provider.ApiVersionDescriptions)
+            {
+                options.SwaggerDoc(
+                    description.GroupName,
+                    CreateVersionInfo(description));
+            }
+        }
+
+        /// <summary>
+        /// Configure Swagger Options. Inherited from the Interface
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="options"></param>
+        public void Configure(string name, SwaggerGenOptions options)
+        {
+            Configure(options);
+        }
+
+        /// <summary>
+        /// Create information about the version of the API
+        /// </summary>
+        /// <param name="description"></param>
+        /// <returns>Information about the API</returns>
+        private OpenApiInfo CreateVersionInfo(
+                ApiVersionDescription desc)
+        {
+            var info = new OpenApiInfo()
+            {
+                Title = ".NET Core (.NET 6) Web API",
+                Version = desc.ApiVersion.ToString()
+            };
+
+            if (desc.IsDeprecated)
+            {
+                info.Description += " This API version has been deprecated. Please use one of the new APIs available from the explorer.";
+            }
+
+            return info;
+        }
+    }
+    ```
+48. Add the following packages for Product.Query.API
+    ```
+    dotnet add package Microsoft.AspNetCore.Mvc.Versioning -v 5.0.0
+    dotnet add package Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer -v 5.0.0
+    ```
+49. Lets make folders for v1 and v2 and make controller for v1 and v2 and configure the api-version configuration in controllers
+    ```
+    cd Product.Query.API
+    cd Controllers
+    mkdir V1
+    mkdir V2
+    ```
+    Move the **ProductController** into V1 and fix the namespace and update the api-version config attributes
+    ```
+    namespace Product.Query.API.Controllers.V1;
+
+    //[ApiController]
+    //[Route("[controller]")]
+    [ApiController]
+    [Route("api/v{version:apiVersion}/[controller]")]
+    [ApiVersion("1.0")]
+    public class ProductController : ControllerBase
+    {
+        private IMediator _mediator;
+        private readonly ILogger<ProductController> _logger;
+        protected IMediator Mediator => _mediator ??= HttpContext.RequestServices.GetService<IMediator>();
+        private readonly ApplicationOptions _applicationOptions;
+
+        public ProductController(ILogger<ProductController> logger, IOptionsSnapshot<ApplicationOptions> applicationOptions)
+        {
+            _logger = logger;
+            _applicationOptions = applicationOptions.Value;
+        }
+
+        [MapToApiVersion("1.0")]
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            return Ok(await Mediator.Send(new GetProductsQuery()));
+        }
+
+        [MapToApiVersion("1.0")]
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            return Ok(await Mediator.Send(new GetProductByIdQuery { Id = id }));
+        }
+        
+    }
+    ```
+    Create **ProductController** in V2 and update configs for V2
+    ```
+    namespace Product.Query.API.Controllers.V2;
+
+    //[ApiController]
+    //[Route("[controller]")]
+    [ApiController]
+    [Route("api/v{version:apiVersion}/[controller]")]
+    [ApiVersion("2.0")]
+    public class ProductController : ControllerBase
+    {
+        private IMediator _mediator;
+        private readonly ILogger<ProductController> _logger;
+        protected IMediator Mediator => _mediator ??= HttpContext.RequestServices.GetService<IMediator>();
+        private readonly ApplicationOptions _applicationOptions;
+
+        public ProductController(ILogger<ProductController> logger, IOptionsSnapshot<ApplicationOptions> applicationOptions)
+        {
+            _logger = logger;
+            _applicationOptions = applicationOptions.Value;
+        }
+
+        [MapToApiVersion("2.0")]
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            return Ok(await Mediator.Send(new GetProductsQuery()));
+        }
+
+        [MapToApiVersion("2.0")]
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            return Ok(await Mediator.Send(new GetProductByIdQuery { Id = id }));
+        }
+        
+    }
+    ```
+50. Go to program.cs and update it accordingly
+    ```
+    using Microsoft.AspNetCore.Mvc;
+    using Microsoft.AspNetCore.Mvc.ApiExplorer;
+    using Microsoft.AspNetCore.Mvc.Versioning;
+    using Product.Query.API;
+
+    var builder = WebApplication.CreateBuilder(args);
+
+    // Add services to the container.
+    builder.Services
+    .AddOptions<ApplicationOptions>()
+    .Bind(builder.Configuration.GetSection(nameof(ApplicationOptions)));
+
+    builder.Services.AddControllers();
+    // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
+
+    builder.Services.AddApiVersioning(options =>
+        {
+            options.AssumeDefaultVersionWhenUnspecified = true;
+            options.DefaultApiVersion = new ApiVersion(1, 0);
+            options.ReportApiVersions = true;
+            options.ApiVersionReader = ApiVersionReader.Combine(
+                new MediaTypeApiVersionReader("version"),
+                new HeaderApiVersionReader("x-api-version"),
+                new QueryStringApiVersionReader("x-api-version")
+            );
+            //options.ApiVersionReader = new UrlSegmentApiVersionReader();
+        });
+    builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
+    // Add ApiExplorer to discover versions
+    builder.Services.AddVersionedApiExplorer(setup =>
+    {
+        setup.GroupNameFormat = "'v'VVV";
+        setup.SubstituteApiVersionInUrl = true;
+    });
+
+    var app = builder.Build();
+
+    // Configure the HTTP request pipeline.
+    if (app.Environment.IsDevelopment())
+    {
+        //app.UseSwagger();
+        //app.UseSwaggerUI();
+        var apiVersionDescriptionProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+
+        app.UseSwagger();
+        app.UseSwaggerUI(options =>
+        {
+            foreach (var description in apiVersionDescriptionProvider.ApiVersionDescriptions)
+            {
+                options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
+                    description.GroupName.ToUpperInvariant());
+            }
+        });
+    }
+
+    app.UseHttpsRedirection();
+
+    app.UseAuthorization();
+
+    app.MapControllers();
+
+    app.Run();
+    ```
+#### API Versioning - end
+51. 
+
+
+
+### References:
+- Option Pattern 
+    - https://medium.com/checkout-com-techblog/the-options-pattern-simplified-8e0e03b41a71
+- API Versioning 
+    - https://vivasoftltd.com/api-versioning-in-asp-net-core/
+    - https://medium.com/@seldah/managing-multiple-versions-of-your-api-with-net-and-swagger-47b4143e8bf5
+    - https://github.com/saideldah/api-versioining-dot-net-6
+- that
