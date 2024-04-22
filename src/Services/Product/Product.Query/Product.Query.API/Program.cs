@@ -1,6 +1,11 @@
+using Product.Query.API;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services
+  .AddOptions<ApplicationOptions>()
+  .Bind(builder.Configuration.GetSection(nameof(ApplicationOptions)));
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

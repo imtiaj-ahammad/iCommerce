@@ -1068,3 +1068,33 @@
     docker ps
     ```
 #### Redis implementation-end
+#### Option pattern-start
+44. Go to API and make a new folder for ApplicationOptions
+    ```
+    cd Product.Query.API
+    mkdir Configurations
+    cd Configurations
+    dotnet new class -n ApplicationOptions
+    ```
+45. Inject the ApplicationOptions into Program.cs 
+    ```
+    cd Product.Query.API
+    ```
+    ```
+    builder.Services
+      .AddOptions<ApplicationOptions>()
+      .Bind(builder.Configuration.GetSection(nameof(ApplicationOptions)));
+    ```
+46. Update the ProductController with ApplicationOptions
+    ```
+    public class ProductController : ControllerBase
+    {
+        private readonly ApplicationOptions _applicationOptions;
+        public ProductController(IOptionsSnapshot<ApplicationOptions> applicationOptions)
+        {
+            _logger = logger;
+            _applicationOptions = applicationOptions.Value;
+        }
+    }
+    ```
+#### Option Pattern-end
