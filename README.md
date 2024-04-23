@@ -1321,7 +1321,66 @@
     app.Run();
     ```
 #### API Versioning - end
-51. 
+
+#### Serilog - start
+51.  Go to Product.Command.API and  Install the following packages
+    ```
+    dotnet add package Serilog.AspNetCore
+    dotnet add package Serilog
+    dotnet add package Serilog.Sinks.Console
+    dotnet add package Serilog.Sinks.File
+    dotnet add package Serilog.Sinks.MSSqlServer
+    ```
+52. Go to program file and inject serilog
+    ```
+    IConfiguration configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: false, reloadOnChange: true).Build();
+    Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(configuration).CreateLogger();
+    builder.Host.UseSerilog();
+    ```
+53. Now lets configure settings in appSettings.json
+    ```
+  "Serilog": {
+    "Using": [ "Serilog.Sinks.File" ],
+    "MinimumLevel": {
+      "Default": "Information"
+    },
+    "WriteTo": [
+      {
+        "Name": "File",
+        "Args": {
+          "path": "../logs/webapi-.log",
+          "rollingInterval": "Day",
+          "outputTemplate": "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {CorrelationId} {Level:u3} {Username} {Message:lj}{Exception}{NewLine}"
+        }
+      },
+      {
+        "Name": "Console",
+        "Args": {
+          "outputTemplate": "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message}{NewLine}{Exception}"
+        }
+      },
+      {
+        "Name": "MSSqlServer",
+        "Args": {
+          "connectionString": "Server=DESKTOP-TM16N21; Database=MovieRentalDb; Trusted_Connection=True; TrustServerCertificate=true",
+          "tableName": "Logs",
+          "autoCreateSqlTable": true
+        }
+      }
+    ]
+  }
+    ```
+54. Add the following package
+    ```
+    dotnet add package Serilog.Sinks.MSSqlServer
+    ```
+11. Let's go to the ProductController and create some logs
+    ```
+    _logger.LogInformation("Seri Log is Working");
+    ```
+#### Serilog - end
+
+
 
 
 
@@ -1332,4 +1391,7 @@
     - https://vivasoftltd.com/api-versioning-in-asp-net-core/
     - https://medium.com/@seldah/managing-multiple-versions-of-your-api-with-net-and-swagger-47b4143e8bf5
     - https://github.com/saideldah/api-versioining-dot-net-6
-- that
+- Serilog
+    - https://www.c-sharpcorner.com/article/how-to-implement-serilog-in-asp-net-core-web-api/
+    - https://www.c-sharpcorner.com/article/how-to-implementation-serilog-in-asp-net-core-5-0-application-with-database/
+    - https://medium.com/@oevrensel/logging-in-asp-net-core-17efca14d953

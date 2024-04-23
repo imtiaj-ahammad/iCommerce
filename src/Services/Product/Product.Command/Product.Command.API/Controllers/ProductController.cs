@@ -24,6 +24,7 @@ public class ProductController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create(CreateProductCommand command)
     {
+        _logger.LogInformation("Seri Log is Working");
         var validationResult = _createProductCommandValidator.Validate(command);
         if (!validationResult.IsValid)
         {
